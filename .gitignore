@@ -1,0 +1,9 @@
+.spyproject
+audio
+meta
+test
+test_audio
+test_evaluate
+test_known
+training
+__pycache__
