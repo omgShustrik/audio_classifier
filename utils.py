@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Aug 16 23:15:44 2018
+Created on Thu Aug 19 23:15:44 2018
 
 @author: Rustem
 """
-from scipy import signal
 import hyper_params as hparams
 import librosa
 import librosa.filters
 import numpy as np
-import tensorflow as tf
 
 
 def load_wav(path):
@@ -20,6 +18,7 @@ def load_wav(path):
 def save_wav(wav, path):
     librosa.output.write_wav(path, wav, hparams.sample_rate)
 
+
 def save_feature(f, path):
     np.save(path, f, allow_pickle=False)
 
@@ -28,6 +27,35 @@ def trim_wav(wav):
     trimmed_wav, _ = librosa.effects.trim(wav, top_db=hparams.trim_treshold)
     return trimmed_wav
 
+
+def remove_all_silence(wav):
+    splitted_wav = np.array([])
+    event_chunks = librosa.effects.split(wav, top_db=hparams.trim_treshold)
+    for start, stop in event_chunks:
+        splitted_wav = np.append(splitted_wav, wav[start:stop])
+    return splitted_wav
+
+
+def pad_chunk(chunk, wav):
+    if len(wav) < hparams.window_size:
+        wav = np.pad(wav, (0, hparams.window_size - len(wav)), 'wrap')
+    chunk = np.append(chunk, wav[:hparams.window_size-len(chunk)])     
+    return chunk
+
+def windows(wav, window_size):
+    start = 0
+    while start < len(wav):
+        yield int(start), int(start + window_size)
+        start += (window_size / 2)
+        
+        
+def one_hot_encode(labels):
+    n_labels = len(labels)
+    n_unique_labels = len(np.unique(labels))
+    one_hot_encode = np.zeros((n_labels,n_unique_labels))
+    one_hot_encode[np.arange(n_labels), labels] = 1
+    return one_hot_encode  
+        
 
 def melspectrogram(wav):
     d = _stft(wav)
